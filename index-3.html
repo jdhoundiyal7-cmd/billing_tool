@@ -1,0 +1,1899 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Billing Tool</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0f172a">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Billing">
+<link rel="icon" href="icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+  :root{
+    --bg:#0f172a;
+    --card:#1e293b;
+    --accent:#38bdf8;
+    --text:#f1f5f9;
+    --muted:#94a3b8;
+    --border:#334155;
+    --danger:#f87171;
+    --ok:#4ade80;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:-apple-system,Roboto,"Segoe UI",sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    padding:12px;
+  }
+  h1{
+    font-size:1.15rem;
+    margin:4px 0 12px;
+    text-align:center;
+    letter-spacing:0.5px;
+  }
+  .tabs{
+    display:flex;
+    gap:8px;
+    margin-bottom:14px;
+    background:var(--card);
+    border-radius:10px;
+    padding:4px;
+    border:1px solid var(--border);
+  }
+  .tab-btn{
+    flex:1;
+    padding:9px;
+    text-align:center;
+    background:transparent;
+    border:none;
+    color:var(--muted);
+    font-weight:600;
+    font-size:0.85rem;
+    border-radius:8px;
+    cursor:pointer;
+  }
+  .tab-btn.active{
+    background:var(--accent);
+    color:#0b1220;
+  }
+  .view{ display:none; }
+  .view.active{ display:block; }
+
+  .table-wrap{
+    overflow-x:auto;
+    border-radius:10px;
+    border:1px solid var(--border);
+  }
+  table{
+    width:100%;
+    border-collapse:collapse;
+    min-width:640px;
+    background:var(--card);
+  }
+  th,td{
+    padding:8px 6px;
+    text-align:center;
+    font-size:0.85rem;
+    border-bottom:1px solid var(--border);
+    white-space:nowrap;
+  }
+  th{
+    background:#0b1220;
+    color:var(--accent);
+    font-weight:600;
+    position:sticky;
+    top:0;
+  }
+  input, select{
+    width:100%;
+    background:#0b1220;
+    border:1px solid var(--border);
+    color:var(--text);
+    padding:6px 4px;
+    border-radius:6px;
+    font-size:0.85rem;
+    text-align:center;
+  }
+  input:focus, select:focus{
+    outline:none;
+    border-color:var(--accent);
+  }
+  input[readonly]{
+    background:#111827;
+    color:var(--muted);
+    border-color:#1f2937;
+  }
+  .lock-badge{
+    font-size:0.65rem;
+    color:var(--muted);
+    display:block;
+    margin-top:2px;
+  }
+  .row-del{
+    background:none;
+    border:none;
+    color:var(--danger);
+    font-size:1.1rem;
+    cursor:pointer;
+    padding:2px 6px;
+  }
+  .loose-charge-input{
+    width:60px;
+    padding:6px 4px;
+    text-align:center;
+  }
+  .actions{
+    display:flex;
+    gap:10px;
+    margin-top:14px;
+    justify-content:center;
+    flex-wrap:wrap;
+  }
+  button.main-btn{
+    background:var(--accent);
+    color:#0b1220;
+    border:none;
+    padding:10px 18px;
+    border-radius:8px;
+    font-weight:600;
+    font-size:0.9rem;
+    cursor:pointer;
+  }
+  button.secondary{
+    background:transparent;
+    color:var(--text);
+    border:1px solid var(--border);
+    padding:10px 18px;
+    border-radius:8px;
+    font-size:0.9rem;
+    cursor:pointer;
+  }
+  tfoot td{
+    background:#0b1220;
+    font-weight:700;
+    color:var(--accent);
+    border-top:2px solid var(--accent);
+  }
+  .grand-total-input{
+    font-weight:700;
+    color:var(--accent) !important;
+  }
+  .svc-wrap{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:2px;
+  }
+  .svc-wrap input.svc{
+    width:100%;
+  }
+  .svc-toggle-btn{
+    background:none;
+    border:none;
+    padding:0;
+    font-size:0.85rem;
+    line-height:1;
+    cursor:pointer;
+  }
+  input.svc-disabled{
+    color:var(--danger) !important;
+    text-decoration:line-through;
+  }
+
+  /* Admin form */
+  .admin-card{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:14px;
+    margin-bottom:14px;
+  }
+  .admin-card h2{
+    font-size:0.95rem;
+    margin:0 0 10px;
+    color:var(--accent);
+  }
+  .admin-form{
+    display:grid;
+    grid-template-columns:1fr 1fr 1fr;
+    gap:8px;
+  }
+  .admin-form input{ text-align:left; padding:9px 8px; }
+  .admin-form select{ text-align:left; padding:9px 8px; }
+  .admin-form button{
+    grid-column:1 / -1;
+  }
+  .cat-wrap{
+    display:flex;
+    gap:6px;
+  }
+  .cat-wrap select{ flex:1; min-width:0; }
+  .cat-add-btn{
+    background:var(--accent);
+    color:#0b1220;
+    border:none;
+    width:36px;
+    flex-shrink:0;
+    border-radius:6px;
+    font-size:1.1rem;
+    font-weight:700;
+    cursor:pointer;
+  }
+  .note{
+    font-size:0.75rem;
+    color:var(--muted);
+    text-align:center;
+    margin-top:10px;
+    line-height:1.4;
+  }
+  .empty-msg{
+    text-align:center;
+    color:var(--muted);
+    font-size:0.8rem;
+    padding:14px;
+  }
+
+  /* Password lock */
+  .lock-screen{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:22px 16px;
+    text-align:center;
+    max-width:320px;
+    margin:20px auto;
+  }
+  .lock-screen .icon{ font-size:2rem; margin-bottom:8px; }
+  .lock-screen input{
+    text-align:center;
+    margin:10px 0;
+    padding:10px;
+  }
+  .lock-error{
+    color:var(--danger);
+    font-size:0.78rem;
+    min-height:16px;
+    margin-bottom:4px;
+  }
+  .change-pass-toggle{
+    background:none;
+    border:none;
+    color:var(--accent);
+    font-size:0.78rem;
+    text-decoration:underline;
+    cursor:pointer;
+    margin-top:8px;
+  }
+  .change-pass-box{
+    display:none;
+    margin-top:10px;
+    text-align:left;
+  }
+  .change-pass-box.open{ display:block; }
+  .change-pass-box input{ margin-bottom:8px; }
+  .success-msg{
+    color:var(--ok);
+    font-size:0.78rem;
+    text-align:center;
+    min-height:16px;
+  }
+  button.print-btn{
+    background:#1a3a2e;
+    color:var(--ok);
+    border:1px solid var(--ok);
+    padding:10px 18px;
+    border-radius:8px;
+    font-weight:600;
+    font-size:0.9rem;
+    cursor:pointer;
+  }
+  .shop-name-wrap{
+    margin-bottom:12px;
+  }
+  #shopName{
+    text-align:center;
+    font-weight:700;
+    font-size:1rem;
+  }
+  .pass-wrap{
+    position:relative;
+    display:flex;
+  }
+  .pass-wrap input{
+    flex:1;
+    padding-right:44px;
+  }
+  .pass-eye{
+    position:absolute;
+    right:0;
+    top:0;
+    bottom:0;
+    width:40px;
+    background:none;
+    border:none;
+    cursor:pointer;
+    font-size:1rem;
+  }
+  .settings-label{
+    display:block;
+    font-size:0.8rem;
+    color:var(--muted);
+    margin-bottom:10px;
+  }
+  .settings-label input{
+    margin-top:4px;
+  }
+  .settings-checkbox{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-size:0.85rem;
+    margin-top:6px;
+    cursor:pointer;
+  }
+  .settings-checkbox input{
+    width:18px;
+    height:18px;
+  }
+  .extra-charges-card{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:12px;
+    margin-top:14px;
+  }
+  .extra-charges-card h3{
+    margin:0 0 10px;
+    font-size:0.92rem;
+    text-align:left;
+  }
+  .extra-charge-form{
+    display:grid;
+    grid-template-columns:1.4fr 1fr auto;
+    gap:8px;
+  }
+  .extra-charge-form input{ text-align:left; padding:9px 8px; }
+  .extra-charge-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:7px 0;
+    border-bottom:1px solid var(--border);
+    font-size:0.85rem;
+  }
+  .extra-charge-row:last-child{ border-bottom:none; }
+
+  /* Bill Preview Overlay */
+  #billPreviewOverlay{
+    display:none;
+  }
+  #billPreviewOverlay.active{
+    display:block;
+    position:fixed;
+    inset:0;
+    background:#fff;
+    color:#000;
+    z-index:9999;
+    overflow-y:auto;
+    padding:16px;
+    font-family: Arial, Helvetica, sans-serif;
+    color-scheme: light;
+  }
+  .bp-shop-name{
+    text-align:center;
+    font-size:1.3rem;
+    font-weight:800;
+    margin-bottom:4px;
+  }
+  .bp-meta{
+    text-align:center;
+    font-size:0.8rem;
+    margin-bottom:10px;
+    border-bottom:1px dashed #000;
+    padding-bottom:8px;
+  }
+  .bp-table{
+    width:100%;
+    border-collapse:collapse;
+    font-size:0.85rem;
+    background:#fff;
+  }
+  .bp-table th, .bp-table td{
+    padding:5px 3px;
+    border-bottom:1px dashed #000;
+    text-align:right;
+    background:#fff;
+    color:#000;
+    font-weight:normal;
+  }
+  .bp-table th{
+    font-weight:700;
+  }
+  .bp-table th:first-child, .bp-table td:first-child{
+    text-align:left;
+  }
+  .bp-subtotal{
+    display:flex;
+    justify-content:space-between;
+    font-size:0.85rem;
+    margin-top:6px;
+    color:#333;
+  }
+  .bp-grand-total{
+    display:flex;
+    justify-content:space-between;
+    font-weight:800;
+    font-size:1rem;
+    margin-top:10px;
+    padding-top:8px;
+    border-top:2px solid #000;
+  }
+  .bp-thanks{
+    text-align:center;
+    margin-top:16px;
+    font-size:0.85rem;
+  }
+  .bp-controls{
+    display:flex;
+    gap:10px;
+    justify-content:center;
+    margin-top:20px;
+  }
+  .bp-controls button{
+    padding:10px 18px;
+    font-size:0.9rem;
+    border-radius:8px;
+    cursor:pointer;
+  }
+  .bp-controls button.main-btn{
+    background:#0b1220;
+    color:#fff;
+    border:1px solid #0b1220;
+  }
+  .bp-controls button.secondary{
+    background:#fff;
+    color:#000;
+    border:1px solid #000;
+  }
+
+  /* Bill History Overlay */
+  #billHistoryOverlay{
+    display:none;
+  }
+  #billHistoryOverlay.active{
+    display:block;
+    position:fixed;
+    inset:0;
+    background:var(--bg);
+    color:var(--text);
+    z-index:9999;
+    overflow-y:auto;
+    padding:16px;
+  }
+  .bh-header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:4px;
+  }
+  .bh-entry{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:12px;
+    margin-bottom:10px;
+  }
+  .bh-entry-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:8px;
+  }
+  .bh-entry-meta{
+    font-size:0.8rem;
+    color:var(--muted);
+  }
+  .bh-entry-total{
+    font-weight:700;
+    color:var(--accent);
+  }
+  .bh-entry-actions{
+    display:flex;
+    gap:8px;
+  }
+  .bh-entry-actions button{
+    flex:1;
+    padding:7px 10px;
+    border-radius:7px;
+    font-size:0.82rem;
+    cursor:pointer;
+  }
+  .bh-empty{
+    text-align:center;
+    color:var(--muted);
+    padding:30px 0;
+  }
+
+  @media print{
+    body > *:not(#billPreviewOverlay){ display:none !important; }
+    #billPreviewOverlay{
+      display:block !important;
+      position:static !important;
+    }
+    .no-print{ display:none !important; }
+  }
+</style>
+</head>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<body>
+
+<h1>📋 Billing / Stock Total Tool</h1>
+
+<div class="tabs">
+  <button class="tab-btn active" id="tabBillBtn" onclick="switchTab('bill')">🧾 Billing</button>
+  <button class="tab-btn" id="tabAdminBtn" onclick="switchTab('admin')">⚙️ Admin</button>
+</div>
+
+<!-- BILLING VIEW -->
+<div class="view active" id="billView">
+  <div class="shop-name-wrap">
+    <input type="text" id="shopName" placeholder="Shop Name (bill ke liye)" value="">
+  </div>
+  <div class="table-wrap">
+  <table id="billTable">
+    <thead>
+      <tr>
+        <th style="width:5%">Sno.</th>
+        <th style="width:22%">Brand &amp; Size</th>
+        <th style="width:11%">Mrp (₹)</th>
+        <th style="width:11%">Svc (₹)</th>
+        <th style="width:12%">Case</th>
+        <th style="width:12%">Loose</th>
+        <th style="width:20%">Total (₹)</th>
+        <th style="width:7%"></th>
+      </tr>
+    </thead>
+    <tbody id="tbody"></tbody>
+    <tfoot>
+      <tr>
+        <td colspan="6" style="text-align:right;">Grand Total</td>
+        <td>
+          <input type="text" id="grandTotal" class="grand-total-input" readonly value="0.00">
+          <span class="lock-badge">🔒 locked</span>
+        </td>
+        <td></td>
+      </tr>
+    </tfoot>
+  </table>
+  </div>
+
+  <div class="extra-charges-card">
+    <h3>➕ Additional Charges</h3>
+    <div class="extra-charge-form">
+      <input type="text" id="extraLabel" placeholder="e.g. Delivery, Packing">
+      <input type="number" id="extraAmount" placeholder="Amount (₹)" step="0.01">
+      <button class="secondary" onclick="addExtraCharge()">Add</button>
+    </div>
+    <div id="extraChargesList"></div>
+  </div>
+
+  <div class="actions">
+    <button class="main-btn" onclick="addRow()">+ Add Row</button>
+    <button class="secondary" onclick="clearAll()">Clear All</button>
+    <button class="print-btn" onclick="printBill()">🖨️ Print Bill</button>
+    <button class="secondary" onclick="openBillHistory()">📜 History</button>
+  </div>
+  <p class="note">Select a product — Mrp fill hoga, Svc khud calculate hoga. Total = (Mrp × total bottles) + Svc. Rates Admin &gt; Settings me set ho sakte hain. Kisi bhi item ka Svc ✅/🚫 button se hata/laga sakte ho, ya box me direct type karke badha/kam kar sakte ho.</p>
+</div>
+
+<script>
+// Units per case, based on category + size (ml)
+function getCaseSize(category, size){
+  const cat = (category || '').trim().toLowerCase();
+  const s = Number(size);
+  if(cat === 'beer'){
+    return 1; // Beer ke Case box me koi multiplication nahi — jitna daalo utna hi count hoga
+  } else {
+    if(s === 750) return 12;
+    if(s === 375) return 24;
+    if(s === 180) return 48;
+    if(s === 90) return 100;
+    if(s === 60) return 150;
+    return null;
+  }
+}
+
+// Configurable service charge rate for CASE (editable from Admin > Settings) — this stays global
+let chargeSettings = {
+  caseCharge: 50
+};
+
+// Flat charge per CASE — applies to every category, including Beer. If a
+// particular item shouldn't have service charge, use the ✅/🚫 toggle on that
+// row in the Billing tab instead of a global category exception.
+function getCaseCharge(category){
+  return chargeSettings.caseCharge;
+}
+
+// Suggested per-bottle LOOSE charge, based on category + size (ml) — only used to
+// auto-fill the "Loose Charge" field when adding/uploading a product. The actual
+// charge used in billing always comes from that product's own stored looseCharge,
+// since loose rate varies brand to brand.
+function suggestLooseCharge(category, size){
+  const cat = (category || '').trim().toLowerCase();
+  const s = Number(size);
+  if(cat === 'beer'){
+    if(s === 650) return 4;
+    if(s === 500) return 2;
+    if(s === 330) return 2;
+    return 1;
+  }
+  if(s === 750) return 4;
+  if(s === 375) return 2;
+  return 1; // baaki bache sizes
+}
+</script>
+
+<!-- ADMIN VIEW -->
+<div class="view" id="adminView">
+
+  <!-- LOCK SCREEN -->
+  <div class="lock-screen" id="adminLock">
+    <div class="icon">🔒</div>
+    <h2 style="margin:0 0 4px;font-size:1rem;">Admin Password</h2>
+    <p class="note" style="margin:4px 0 0;">Enter password to access Admin</p>
+    <div class="pass-wrap">
+      <input type="password" id="lockPassInput" placeholder="Password" onkeydown="if(event.key==='Enter')checkPassword()">
+      <button type="button" class="pass-eye" onclick="togglePasswordVisibility('lockPassInput', this)">👁️</button>
+    </div>
+    <div class="lock-error" id="lockError"></div>
+    <button class="main-btn" onclick="checkPassword()" style="width:100%;">Unlock</button>
+  </div>
+
+  <!-- ADMIN CONTENT (unlocked) -->
+  <div id="adminContent" style="display:none;">
+
+    <div class="admin-card">
+      <h2>➕ Add New Product</h2>
+      <div class="admin-form">
+        <div class="cat-wrap">
+          <select id="newCategory" onchange="onCategoryChange()"></select>
+          <button type="button" class="cat-add-btn" onclick="promptAddCategory()" title="Add new category">+</button>
+        </div>
+        <input type="text" id="newBrandCode" placeholder="Brand Code">
+        <input type="text" id="newBrand" placeholder="Brand Name">
+        <div class="cat-wrap">
+          <select id="newSize" onchange="autofillCaseSize()"></select>
+          <button type="button" class="cat-add-btn" onclick="promptAddSize()" title="Add new size">+</button>
+        </div>
+        <input type="number" id="newMrp" placeholder="Mrp (₹)" step="0.01">
+        <input type="number" id="newCaseSize" placeholder="Units per Case (e.g. 12)" step="1" min="1">
+        <input type="number" id="newLooseCharge" placeholder="Loose Charge (₹/bottle)" step="0.5" min="0">
+        <button class="main-btn" onclick="addMaster()">Add</button>
+      </div>
+      <p class="note" style="margin-top:8px;">Size daalte hi "Units per Case" aur "Loose Charge" khud suggest ho jayenge — chaho to edit kar sakte ho. Loose Charge har brand ke liye alag set kar sakte ho.</p>
+    </div>
+
+    <div class="admin-card">
+      <h2>📤 Upload from Excel</h2>
+      <p class="note" style="margin-top:0;">File me columns hone chahiye: <b>Category</b>, <b>Brand Code</b>, <b>Brand</b>, <b>Size</b>, <b>Mrp</b>, <b>Case Size</b>, <b>Loose Charge</b> (pehli row header ke roop me, Case Size &amp; Loose Charge optional hain)</p>
+      <p class="note" style="margin-top:4px;">Agar niche "Cloud Sync" me Sync URL already set hai, to import ke turant baad data khud-ba-khud cloud par chala jaayega — baaki devices apne aap (~20 sec me) sync ho jayenge, kuch dabana nahi padega.</p>
+      <input type="file" id="excelFile" accept=".xlsx,.xls,.csv" onchange="handleExcelUpload(event)" style="text-align:left;padding:9px 8px;">
+      <div class="success-msg" id="excelMsg"></div>
+    </div>
+
+    <div class="table-wrap">
+    <table id="masterTable">
+      <thead>
+        <tr>
+          <th>Category</th>
+          <th>Code</th>
+          <th>Brand</th>
+          <th>Size</th>
+          <th>Case Sz</th>
+          <th>Mrp (₹)</th>
+          <th>Loose ₹</th>
+          <th style="width:10%"></th>
+        </tr>
+      </thead>
+      <tbody id="masterBody"></tbody>
+    </table>
+    </div>
+    <p class="note">Whatever you add here will be available for selection in the Billing tab dropdown. "Loose ₹" seedha yahin se edit kar sakte ho, har brand ke liye alag.</p>
+
+    <div class="admin-card">
+      <h2>⚙️ Settings</h2>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px;">
+        <span style="font-size:0.88rem;">Shop Name field (Billing tab)</span>
+        <button class="secondary" id="shopNameToggleBtn" onclick="toggleShopNameFeature()">🔒 Disabled — Enable</button>
+      </div>
+
+      <h3 style="font-size:0.9rem;margin:10px 0 8px;text-align:left;">Service Charge — Case</h3>
+      <div class="admin-form" style="text-align:left;">
+        <label class="settings-label">Case charge (₹ per case, sab categories par lagu — Beer bhi)
+          <input type="number" id="setCaseCharge" step="1" min="0" value="50" oninput="updateChargeSettings()">
+        </label>
+      </div>
+      <p class="note" style="margin-top:8px;">Kisi bhi item par service charge nahi chahiye to Billing tab me us row ke ✅/🚫 button se hata sakte ho. Loose charge har brand ke liye "Add New Product" form / master list me alag se set hota hai (niche list me "Loose ₹" column).</p>
+    </div>
+
+    <div class="admin-card">
+      <h2>☁️ Cloud Sync (multi-device, auto)</h2>
+      <p class="note" style="margin-top:0;">Ek baar free setup karo (5 min) aur URL yahan paste karo. Uske baad kisi bhi device par product/category/size/charge/password change karo — khud-ba-khud (~1 second baad) cloud par chala jaayega, aur baaki devices har 20 second me khud check karke apne aap update ho jayenge. Kuch bhi manually dabana nahi padega.</p>
+      <div style="text-align:left;">
+        <input type="text" id="syncUrlInput" placeholder="Sync URL yahan paste karo" style="margin-bottom:8px;">
+      </div>
+      <div class="actions" style="margin-top:0;">
+        <button class="secondary" onclick="uploadToCloud(false)">☁️ Upload Now</button>
+        <button class="secondary" onclick="downloadFromCloud(false)">⬇️ Download Now</button>
+      </div>
+      <div class="actions" style="margin-top:8px;">
+        <button class="secondary" onclick="showSyncQr()">📱 Show QR</button>
+        <button class="secondary" onclick="openQrScanner()">📷 Scan QR</button>
+      </div>
+      <p class="note" style="margin-top:6px;">Naye device par URL type nahi karna — is device par "📱 Show QR" dabao, naye device par "📷 Scan QR" se wahi QR scan karo, URL apne aap fill/save ho jaayega.</p>
+      <div class="success-msg" id="syncMsg"></div>
+      <button class="change-pass-toggle" onclick="document.getElementById('syncSetupBox').classList.toggle('open')">Setup kaise karu? (dikhao/chupao)</button>
+      <div class="change-pass-box" id="syncSetupBox">
+        <ol style="font-size:0.8rem;color:var(--muted);padding-left:18px;line-height:1.6;text-align:left;">
+          <li><a href="https://script.google.com" target="_blank" style="color:var(--accent);">script.google.com</a> kholo, "New Project" banao.</li>
+          <li>Neeche wala code "Copy Code" button se copy karo, aur editor me jo default code likha hai use hatakar ye paste kar do.</li>
+          <li>Upar "Deploy" → "New deployment" → type "Web app" select karo.</li>
+          <li>"Who has access" → "Anyone" set karo, phir "Deploy" dabao.</li>
+          <li>Jo URL mile (script.google.com/macros/... wala), use upar "Sync URL" box me paste kar do — ye same URL sabhi devices me paste karna hai.</li>
+        </ol>
+        <pre id="appsScriptCode" style="background:#0b1220;border:1px solid var(--border);border-radius:8px;padding:10px;font-size:0.7rem;color:var(--text);overflow-x:auto;white-space:pre;text-align:left;">function doGet(e) {
+  var props = PropertiesService.getScriptProperties();
+  var data = props.getProperty('billingData');
+  return ContentService.createTextOutput(data || '{}')
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+function doPost(e) {
+  var props = PropertiesService.getScriptProperties();
+  props.setProperty('billingData', e.postData.contents);
+  return ContentService.createTextOutput(JSON.stringify({status:'ok'}))
+    .setMimeType(ContentService.MimeType.JSON);
+}</pre>
+        <button class="secondary" style="width:100%;margin-top:6px;" onclick="copyAppsScriptCode(this)">📋 Copy Code</button>
+      </div>
+    </div>
+
+    <div class="admin-card">
+      <h2>🔑 Change Password</h2>
+      <div style="text-align:left;">
+        <div class="pass-wrap" style="margin-bottom:8px;">
+          <input type="password" id="oldPass" placeholder="Current Password">
+          <button type="button" class="pass-eye" onclick="togglePasswordVisibility('oldPass', this)">👁️</button>
+        </div>
+        <div class="pass-wrap" style="margin-bottom:8px;">
+          <input type="password" id="newPass1" placeholder="New Password">
+          <button type="button" class="pass-eye" onclick="togglePasswordVisibility('newPass1', this)">👁️</button>
+        </div>
+        <div class="pass-wrap" style="margin-bottom:8px;">
+          <input type="password" id="newPass2" placeholder="New Password (confirm)">
+          <button type="button" class="pass-eye" onclick="togglePasswordVisibility('newPass2', this)">👁️</button>
+        </div>
+        <button class="main-btn" onclick="changePassword()" style="width:100%;">Update Password</button>
+        <div class="success-msg" id="passMsg"></div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="secondary" onclick="lockAdmin()">🔒 Lock Admin</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- Bill Preview Overlay: shown on the SAME page (no new tab/window) so printing never
+     depends on popups being allowed. Print/Save button just calls window.print() on
+     this page while @media print hides everything else. -->
+<div id="billPreviewOverlay">
+  <div class="bp-shop-name" id="bpShopName">Bill</div>
+  <div class="bp-meta" id="bpMeta"></div>
+  <table class="bp-table">
+    <thead>
+      <tr><th>Item</th><th>Qty</th><th>Mrp</th><th>Svc</th><th>Total (₹)</th></tr>
+    </thead>
+    <tbody id="bpBody"></tbody>
+  </table>
+  <div class="bp-subtotal"><span>Total Mrp</span><span id="bpMrpTotal">₹0.00</span></div>
+  <div class="bp-subtotal"><span>Total Service Charge</span><span id="bpSvcTotal">₹0.00</span></div>
+  <div class="bp-grand-total"><span>Grand Total</span><span id="bpGrandTotal">₹0.00</span></div>
+  <div class="bp-thanks">Thank you, visit again!</div>
+  <div class="bp-controls no-print">
+    <button class="main-btn" onclick="window.print()">🖨️ Print / Save as PDF</button>
+    <button class="secondary" onclick="closeBillPreview()">✖ Close</button>
+  </div>
+</div>
+
+<div id="billHistoryOverlay">
+  <div class="bh-header">
+    <h2 style="margin:0;">📜 Bill History</h2>
+    <button class="secondary" onclick="closeBillHistory()">✖ Close</button>
+  </div>
+  <p class="note" style="margin:6px 0 12px;">Ye list sirf is session ke liye hai — page reload/band karne par reset ho jaayegi.</p>
+  <div id="billHistoryList"></div>
+</div>
+
+<!-- QR code showing this device's Sync URL, for scanning on other devices -->
+<div id="qrDisplayOverlay" style="display:none;position:fixed;inset:0;background:#fff;color:#000;z-index:9999;padding:20px;text-align:center;overflow-y:auto;">
+  <h2 style="margin:6px 0 4px;">📱 Sync URL QR</h2>
+  <p style="font-size:0.85rem;color:#333;">Doosre device par "📷 Scan QR" button se camera se ise scan karo.</p>
+  <div id="qrCodeBox" style="display:flex;justify-content:center;margin:18px 0;"></div>
+  <button class="secondary" style="border-color:#000;color:#000;" onclick="closeSyncQr()">✖ Close</button>
+</div>
+
+<!-- Camera scanner overlay to read a Sync URL QR shown on another device -->
+<div id="qrScannerOverlay" style="display:none;position:fixed;inset:0;background:#000;z-index:9999;">
+  <video id="qrVideo" style="width:100%;height:100%;object-fit:cover;" playsinline muted></video>
+  <canvas id="qrCanvas" style="display:none;"></canvas>
+  <div style="position:absolute;top:12px;right:12px;">
+    <button class="secondary" style="background:#000;color:#fff;border-color:#fff;" onclick="closeQrScanner()">✖ Close</button>
+  </div>
+  <div id="qrScanMsg" style="position:absolute;bottom:24px;left:0;right:0;text-align:center;color:#fff;font-size:0.9rem;padding:0 16px;"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.js"></script>
+
+<script>
+
+// ---------- Master Data (Admin) ----------
+let masterData = []; // {id, category, brand, size, mrp}
+let masterId = 0;
+let categoryList = ['Beer', 'Whiskey', 'Vodka', 'Rum', 'Scotch'];
+let sizeList = [60, 90, 180, 330, 375, 500, 650, 750, 1000, 2000];
+// Sizes shown when "Beer" is the selected category — other categories see the rest.
+let beerSizeList = [330, 500, 650];
+
+function sizeLabel(s){
+  if(s >= 1000 && s % 1000 === 0) return `${s}ml (${s/1000} Ltr)`;
+  return `${s}ml`;
+}
+
+// Returns only the sizes relevant to the given category: Beer -> 330/500/650ml,
+// everything else -> the remaining sizes in the list.
+function getSizesForCategory(category){
+  const cat = (category || '').trim().toLowerCase();
+  if(cat === 'beer'){
+    return sizeList.filter(s => beerSizeList.includes(s));
+  }
+  return sizeList.filter(s => !beerSizeList.includes(s));
+}
+
+function renderSizeOptions(selectedValue){
+  const sel = document.getElementById('newSize');
+  const current = selectedValue !== undefined ? selectedValue : sel.value;
+  const category = document.getElementById('newCategory').value;
+  const filtered = getSizesForCategory(category);
+  const sorted = [...filtered].sort((a,b) => a-b);
+  sel.innerHTML = sorted.map(s =>
+    `<option value="${s}" ${String(s)===String(current)?'selected':''}>${sizeLabel(s)}</option>`
+  ).join('');
+  // if the previously selected size doesn't belong to this category, fall back to the first option
+  if(sorted.length && !sorted.some(s => String(s) === String(current))){
+    sel.value = String(sorted[0]);
+  }
+}
+
+// Category changed -> refresh which sizes are shown, then re-suggest case size / loose charge
+function onCategoryChange(){
+  renderSizeOptions();
+  autofillCaseSize();
+}
+
+function promptAddSize(){
+  const input = prompt('New size in ml (e.g. 200):');
+  if(!input) return;
+  const size = parseFloat(input.trim());
+  if(isNaN(size) || size <= 0){
+    alert('Please enter a valid size in ml.');
+    return;
+  }
+  if(sizeList.includes(size)){
+    alert(`${sizeLabel(size)} already exists in the list.`);
+    renderSizeOptions(size);
+    return;
+  }
+  sizeList.push(size);
+  const category = document.getElementById('newCategory').value;
+  if((category || '').trim().toLowerCase() === 'beer' && !beerSizeList.includes(size)){
+    beerSizeList.push(size);
+  }
+  renderSizeOptions(size);
+  scheduleAutoUpload();
+}
+
+function renderCategoryOptions(selectedValue){
+  const sel = document.getElementById('newCategory');
+  const current = selectedValue !== undefined ? selectedValue : sel.value;
+  sel.innerHTML = categoryList.map(c =>
+    `<option value="${c}" ${c===current?'selected':''}>${c}</option>`
+  ).join('');
+}
+
+function promptAddCategory(){
+  const name = prompt('New category name:');
+  if(!name) return;
+  const trimmed = name.trim();
+  if(!trimmed) return;
+  const exists = categoryList.find(c => c.toLowerCase() === trimmed.toLowerCase());
+  if(exists){
+    alert(`"${exists}" already exists in the list.`);
+    renderCategoryOptions(exists);
+    renderSizeOptions();
+    return;
+  }
+  categoryList.push(trimmed);
+  renderCategoryOptions(trimmed);
+  renderSizeOptions();
+  scheduleAutoUpload();
+}
+
+function autofillCaseSize(){
+  const category = document.getElementById('newCategory').value;
+  const size = parseFloat(document.getElementById('newSize').value);
+  const caseEl = document.getElementById('newCaseSize');
+  const looseEl = document.getElementById('newLooseCharge');
+  if(!isNaN(size)){
+    const suggestedCase = getCaseSize(category, size);
+    if(suggestedCase) caseEl.value = suggestedCase;
+    looseEl.value = suggestLooseCharge(category, size);
+  }
+}
+
+function addMaster(){
+  const category = document.getElementById('newCategory').value.trim();
+  const code = document.getElementById('newBrandCode').value.trim();
+  const brand = document.getElementById('newBrand').value.trim();
+  const size = parseFloat(document.getElementById('newSize').value);
+  const mrp = parseFloat(document.getElementById('newMrp').value);
+  let caseSize = parseInt(document.getElementById('newCaseSize').value);
+  let looseCharge = parseFloat(document.getElementById('newLooseCharge').value);
+
+  if(!brand || isNaN(size) || isNaN(mrp)){
+    alert('Please fill in Brand, Size and Mrp');
+    return;
+  }
+
+  if(isNaN(caseSize) || caseSize < 1){
+    caseSize = getCaseSize(category, size) || 12;
+  }
+  if(isNaN(looseCharge) || looseCharge < 0){
+    looseCharge = suggestLooseCharge(category, size);
+  }
+
+  const duplicate = masterData.find(m =>
+    m.brand.toLowerCase() === brand.toLowerCase() && m.size === size
+  );
+  if(duplicate){
+    alert(`"${brand}" (${size} ml) already exists in the list. Edit or delete the existing entry first.`);
+    return;
+  }
+
+  masterId++;
+  masterData.push({id: masterId, category: category || 'General', code, brand, size, mrp, caseSize, looseCharge});
+  document.getElementById('newBrandCode').value = '';
+  document.getElementById('newBrand').value = '';
+  document.getElementById('newMrp').value = '';
+  document.getElementById('newCaseSize').value = '';
+  document.getElementById('newLooseCharge').value = '';
+  renderMaster();
+  refreshAllDropdowns();
+  scheduleAutoUpload();
+}
+
+function updateLooseCharge(id, value){
+  const amount = parseFloat(value);
+  const item = masterData.find(m => m.id === id);
+  if(!item) return;
+  item.looseCharge = isNaN(amount) || amount < 0 ? 0 : amount;
+  recalcAllRows();
+  scheduleAutoUpload();
+}
+
+function handleExcelUpload(event){
+  const file = event.target.files[0];
+  const msg = document.getElementById('excelMsg');
+  if(!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(e){
+    try{
+      const data = new Uint8Array(e.target.result);
+      const workbook = XLSX.read(data, {type:'array'});
+      const sheet = workbook.Sheets[workbook.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(sheet, {defval:''});
+
+      if(rows.length === 0){
+        msg.style.color = 'var(--danger)';
+        msg.textContent = 'File khali hai ya read nahi ho payi';
+        return;
+      }
+
+      // find matching column names case-insensitively
+      const keys = Object.keys(rows[0]);
+      const findKey = (target) => keys.find(k => k.toString().trim().toLowerCase() === target);
+      const categoryKey = findKey('category');
+      const codeKey = findKey('code') || findKey('brand code') || findKey('brandcode');
+      const brandKey = findKey('brand') || findKey('brandname') || findKey('brand name');
+      const sizeKey = findKey('size');
+      const mrpKey = findKey('mrp');
+      const caseSizeKey = findKey('case size') || findKey('casesize') || findKey('units per case') || findKey('unitspercase');
+      const looseChargeKey = findKey('loose charge') || findKey('loosecharge') || findKey('loose');
+
+      if(!brandKey || !sizeKey || !mrpKey){
+        msg.style.color = 'var(--danger)';
+        msg.textContent = 'File me Brand, Size aur Mrp columns nahi mile. Header row check karo.';
+        return;
+      }
+
+      let added = 0, updated = 0, skipped = 0;
+
+      rows.forEach(row => {
+        const category = categoryKey ? String(row[categoryKey]).trim() : '';
+        const code = codeKey ? String(row[codeKey]).trim() : '';
+        const brand = String(row[brandKey]).trim();
+        const size = parseFloat(row[sizeKey]);
+        const mrp = parseFloat(row[mrpKey]);
+        let caseSize = caseSizeKey ? parseInt(row[caseSizeKey]) : NaN;
+        let looseCharge = looseChargeKey ? parseFloat(row[looseChargeKey]) : NaN;
+
+        if(!brand || isNaN(size) || isNaN(mrp)){
+          skipped++;
+          return;
+        }
+
+        if(isNaN(caseSize) || caseSize < 1){
+          caseSize = getCaseSize(category, size) || 12;
+        }
+        if(isNaN(looseCharge) || looseCharge < 0){
+          looseCharge = suggestLooseCharge(category, size);
+        }
+
+        if(category && !categoryList.find(c => c.toLowerCase() === category.toLowerCase())){
+          categoryList.push(category);
+        }
+        if(!sizeList.includes(size)){
+          sizeList.push(size);
+        }
+
+        const existing = masterData.find(m =>
+          m.brand.toLowerCase() === brand.toLowerCase() && m.size === size
+        );
+
+        if(existing){
+          existing.mrp = mrp;
+          existing.caseSize = caseSize;
+          existing.looseCharge = looseCharge;
+          if(category) existing.category = category;
+          if(code) existing.code = code;
+          updated++;
+        } else {
+          masterId++;
+          masterData.push({id: masterId, category: category || 'General', code, brand, size, mrp, caseSize, looseCharge});
+          added++;
+        }
+      });
+
+      renderCategoryOptions();
+      renderSizeOptions();
+      renderMaster();
+      refreshAllDropdowns();
+      msg.textContent = `✅ ${added} added, ${updated} updated${skipped ? `, ${skipped} skipped (invalid rows)` : ''}`;
+      event.target.value = '';
+
+      scheduleAutoUpload();
+
+    } catch(err){
+      msg.style.color = 'var(--danger)';
+      msg.textContent = 'File read nahi ho payi. Sahi .xlsx/.xls/.csv file try karo.';
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function delMaster(id){
+  masterData = masterData.filter(m => m.id !== id);
+  renderMaster();
+  refreshAllDropdowns();
+  scheduleAutoUpload();
+}
+
+function renderMaster(){
+  const body = document.getElementById('masterBody');
+  if(masterData.length === 0){
+    body.innerHTML = '<tr><td colspan="8" class="empty-msg">No entries yet. Add one above.</td></tr>';
+    return;
+  }
+  body.innerHTML = masterData.map(m => `
+    <tr>
+      <td>${m.category || 'General'}</td>
+      <td>${m.code || '-'}</td>
+      <td>${m.brand}</td>
+      <td>${m.size} ml</td>
+      <td>x${m.caseSize || 12}</td>
+      <td>₹${m.mrp.toFixed(2)}</td>
+      <td><input type="number" class="loose-charge-input" step="0.5" min="0" value="${m.looseCharge != null ? m.looseCharge : 0}" onchange="updateLooseCharge(${m.id}, this.value)"></td>
+      <td><button class="row-del" onclick="delMaster(${m.id})">✕</button></td>
+    </tr>
+  `).join('');
+}
+
+// ---------- Billing Table ----------
+let rowCount = 0;
+
+function getUsedProductIds(excludeTr){
+  const used = [];
+  document.querySelectorAll('#tbody tr').forEach(tr=>{
+    if(tr === excludeTr) return;
+    const p = tr.querySelector('.product').value;
+    if(p) used.push(p);
+  });
+  return used;
+}
+
+function productOptionsHtml(selectedId, excludeTr){
+  const usedIds = getUsedProductIds(excludeTr);
+  let html = '<option value="">-- Select Brand &amp; Size --</option>';
+  masterData.forEach(m=>{
+    const taken = usedIds.includes(String(m.id)) && String(m.id) !== String(selectedId);
+    html += `<option value="${m.id}" ${String(m.id)===String(selectedId)?'selected':''} ${taken?'disabled':''}>${m.brand} - ${m.size}ml${taken?' (already added)':''}</option>`;
+  });
+  return html;
+}
+
+function addRow(){
+  rowCount++;
+  const tbody = document.getElementById('tbody');
+  const tr = document.createElement('tr');
+  tr.dataset.id = rowCount;
+  tr.dataset.svcOff = '0';
+  tr.dataset.svcManual = '0';
+  tr.innerHTML = `
+    <td class="sno">${rowCount}</td>
+    <td><select class="product" onchange="onProductChange(this)">${productOptionsHtml('', tr)}</select></td>
+    <td><input type="text" class="mrp" readonly value=""></td>
+    <td>
+      <div class="svc-wrap">
+        <input type="text" class="svc" value="" oninput="onSvcManualEdit(this)">
+        <button type="button" class="svc-toggle-btn" onclick="toggleSvcRow(this)" title="Service charge ON — tap to remove">✅</button>
+      </div>
+    </td>
+    <td><input type="number" class="case" placeholder="0" step="1" min="0" oninput="calcRow(this)" disabled></td>
+    <td><input type="number" class="loose" placeholder="0" step="1" min="0" oninput="calcRow(this)"></td>
+    <td><input type="text" class="total" readonly value="0.00"></td>
+    <td><button class="row-del" onclick="delRow(this)">✕</button></td>
+  `;
+  tbody.appendChild(tr);
+}
+
+function applyProductToRow(tr, match){
+  const mrpEl = tr.querySelector('.mrp');
+  const svcEl = tr.querySelector('.svc');
+  const caseEl = tr.querySelector('.case');
+
+  if(match){
+    mrpEl.value = match.mrp.toFixed(2);
+    svcEl.value = '0.00';
+    const caseSize = match.caseSize || 12;
+    caseEl.disabled = false;
+    caseEl.placeholder = `x${caseSize}`;
+  } else {
+    mrpEl.value = '';
+    svcEl.value = '';
+    caseEl.disabled = true;
+    caseEl.value = '';
+    caseEl.placeholder = '0';
+  }
+}
+
+function onProductChange(sel){
+  const tr = sel.closest('tr');
+  const id = sel.value;
+
+  const usedIds = getUsedProductIds(tr);
+  if(id && usedIds.includes(id)){
+    const m = masterData.find(x => String(x.id) === String(id));
+    alert(`${m.brand} - ${m.size}ml is already added in another row. Please choose a different product.`);
+    sel.value = '';
+    applyProductToRow(tr, null);
+    calcRow(sel);
+    return;
+  }
+
+  // switching products clears any per-row service-charge override, back to auto
+  tr.dataset.svcOff = '0';
+  tr.dataset.svcManual = '0';
+  const svcElReset = tr.querySelector('.svc');
+  const svcBtnReset = tr.querySelector('.svc-toggle-btn');
+  svcElReset.readOnly = false;
+  svcElReset.classList.remove('svc-disabled');
+  if(svcBtnReset){ svcBtnReset.textContent = '✅'; svcBtnReset.title = 'Service charge ON — tap to remove'; }
+
+  const match = masterData.find(m => String(m.id) === String(id));
+  applyProductToRow(tr, match);
+  calcRow(sel);
+}
+
+function refreshAllDropdowns(){
+  document.querySelectorAll('#tbody tr').forEach(tr=>{
+    const productSel = tr.querySelector('.product');
+    const currentId = productSel.value;
+    productSel.innerHTML = productOptionsHtml(currentId, tr);
+
+    const match = masterData.find(m => String(m.id) === String(currentId));
+    const caseVal = tr.querySelector('.case').value;
+    const looseVal = tr.querySelector('.loose').value;
+    const svcOff = tr.dataset.svcOff === '1';
+    const svcManual = tr.dataset.svcManual === '1';
+    const svcVal = tr.querySelector('.svc').value;
+    applyProductToRow(tr, match);
+    if(match){
+      tr.querySelector('.case').value = caseVal;
+      tr.querySelector('.loose').value = looseVal;
+    }
+    // restore per-row service-charge override (off / manually edited) after refresh
+    const svcEl = tr.querySelector('.svc');
+    const svcBtn = tr.querySelector('.svc-toggle-btn');
+    tr.dataset.svcOff = svcOff ? '1' : '0';
+    tr.dataset.svcManual = svcManual ? '1' : '0';
+    if(svcOff){
+      svcEl.readOnly = true;
+      svcEl.classList.add('svc-disabled');
+      if(svcBtn){ svcBtn.textContent = '🚫'; svcBtn.title = 'Service charge OFF — tap to add back'; }
+    } else if(svcManual){
+      svcEl.value = svcVal;
+    }
+    calcRow(productSel);
+  });
+}
+
+function calcRow(el){
+  const tr = el.closest('tr');
+  const mrp = parseFloat(tr.querySelector('.mrp').value) || 0;
+  const caseQty = parseFloat(tr.querySelector('.case').value) || 0;
+  const looseQty = parseFloat(tr.querySelector('.loose').value) || 0;
+
+  const productSel = tr.querySelector('.product');
+  const match = masterData.find(m => String(m.id) === String(productSel.value));
+  const caseSize = match ? (match.caseSize || 12) : 0;
+
+  const svcEl = tr.querySelector('.svc');
+  const svcOff = tr.dataset.svcOff === '1';
+  const svcManual = tr.dataset.svcManual === '1';
+
+  let svcTotal;
+  if(svcOff){
+    // service charge removed for this item
+    svcTotal = 0;
+    svcEl.value = '0.00';
+  } else if(svcManual){
+    // user has manually increased/decreased the service charge for this item
+    svcTotal = parseFloat(svcEl.value) || 0;
+  } else {
+    const caseCharge = match ? getCaseCharge(match.category) : 0;
+    const looseCharge = match ? (match.looseCharge != null ? match.looseCharge : suggestLooseCharge(match.category, match.size)) : 0;
+    svcTotal = (caseQty * caseCharge) + (looseQty * looseCharge);
+    svcEl.value = svcTotal.toFixed(2);
+  }
+
+  const totalBottles = (caseQty * caseSize) + looseQty;
+  const total = (mrp * totalBottles) + svcTotal;
+
+  tr.querySelector('.total').value = total.toFixed(2);
+  updateGrandTotal();
+}
+
+// Called when the user types directly into a row's Svc field — treats it as a
+// manual override so future qty changes don't silently overwrite their value.
+function onSvcManualEdit(el){
+  const tr = el.closest('tr');
+  if(tr.dataset.svcOff === '1') return; // ignore edits while service charge is OFF
+  tr.dataset.svcManual = '1';
+  calcRow(el);
+}
+
+// Toggles service charge OFF (removed, shows ₹0.00) / back ON (auto-calculated again)
+// for a single row, without affecting any other row or the global Settings rate.
+function toggleSvcRow(btn){
+  const tr = btn.closest('tr');
+  const svcEl = tr.querySelector('.svc');
+  const isOff = tr.dataset.svcOff === '1';
+  if(isOff){
+    tr.dataset.svcOff = '0';
+    tr.dataset.svcManual = '0';
+    svcEl.readOnly = false;
+    svcEl.classList.remove('svc-disabled');
+    btn.textContent = '✅';
+    btn.title = 'Service charge ON — tap to remove';
+  } else {
+    tr.dataset.svcOff = '1';
+    svcEl.readOnly = true;
+    svcEl.classList.add('svc-disabled');
+    btn.textContent = '🚫';
+    btn.title = 'Service charge OFF — tap to add back';
+  }
+  calcRow(svcEl);
+}
+
+function delRow(btn){
+  btn.closest('tr').remove();
+  renumber();
+  updateGrandTotal();
+}
+
+function renumber(){
+  const rows = document.querySelectorAll('#tbody tr');
+  rows.forEach((r,i)=>{ r.querySelector('.sno').textContent = i+1; });
+  rowCount = rows.length;
+}
+
+// ---------- Additional Charges ----------
+let additionalCharges = [];
+let extraChargeId = 0;
+
+function addExtraCharge(){
+  const label = document.getElementById('extraLabel').value.trim();
+  const amount = parseFloat(document.getElementById('extraAmount').value);
+  if(!label || isNaN(amount)){
+    alert('Charge ka naam aur Amount dono bharo');
+    return;
+  }
+  extraChargeId++;
+  additionalCharges.push({id: extraChargeId, label, amount});
+  document.getElementById('extraLabel').value = '';
+  document.getElementById('extraAmount').value = '';
+  renderExtraCharges();
+  updateGrandTotal();
+}
+
+function delExtraCharge(id){
+  additionalCharges = additionalCharges.filter(c => c.id !== id);
+  renderExtraCharges();
+  updateGrandTotal();
+}
+
+function renderExtraCharges(){
+  const el = document.getElementById('extraChargesList');
+  if(additionalCharges.length === 0){
+    el.innerHTML = '';
+    return;
+  }
+  el.innerHTML = additionalCharges.map(c => `
+    <div class="extra-charge-row">
+      <span>${escapeHtml(c.label)}</span>
+      <span>₹${c.amount.toFixed(2)} <button class="row-del" onclick="delExtraCharge(${c.id})">✕</button></span>
+    </div>
+  `).join('');
+}
+
+function updateGrandTotal(){
+  const totals = document.querySelectorAll('#tbody .total');
+  let sum = 0;
+  totals.forEach(t => sum += parseFloat(t.value) || 0);
+  const extraSum = additionalCharges.reduce((s,c) => s + c.amount, 0);
+  document.getElementById('grandTotal').value = (sum + extraSum).toFixed(2);
+}
+
+function clearAll(){
+  if(confirm('Delete all rows?')){
+    document.getElementById('tbody').innerHTML = '';
+    rowCount = 0;
+    additionalCharges = [];
+    renderExtraCharges();
+    updateGrandTotal();
+  }
+}
+
+// ---------- Print Bill ----------
+function escapeHtml(str){
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+let billHistory = []; // saved bills for this session: {id, dateStr, timeStr, shopName, rows, extraCharges, mrpTotal, svcTotal, grandTotal}
+let billHistoryId = 0;
+
+function buildCurrentBillSnapshot(){
+  const rows = Array.from(document.querySelectorAll('#tbody tr')).filter(tr=>{
+    const sel = tr.querySelector('.product');
+    return sel && sel.value;
+  });
+
+  if(rows.length === 0) return null;
+
+  const shopName = document.getElementById('shopName').value.trim();
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('en-IN');
+  const timeStr = now.toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit'});
+  const grandTotal = document.getElementById('grandTotal').value;
+
+  let mrpTotal = 0, svcTotal = 0;
+
+  const rowData = rows.map(tr=>{
+    const sel = tr.querySelector('.product');
+    const label = sel.options[sel.selectedIndex].textContent;
+    const caseQty = parseFloat(tr.querySelector('.case').value) || 0;
+    const looseQty = parseFloat(tr.querySelector('.loose').value) || 0;
+    const mrp = parseFloat(tr.querySelector('.mrp').value) || 0;
+    const svc = parseFloat(tr.querySelector('.svc').value) || 0;
+    const total = tr.querySelector('.total').value || '0.00';
+
+    const match = masterData.find(m => String(m.id) === String(sel.value));
+    const caseSize = match ? (match.caseSize || 12) : 0;
+    const totalQty = (caseQty * caseSize) + looseQty;
+
+    mrpTotal += mrp * totalQty;
+    svcTotal += svc;
+
+    return { label, qty: totalQty, mrp: mrp.toFixed(2), svc: svc.toFixed(2), total };
+  });
+
+  const extraCharges = additionalCharges.map(c => ({ label: c.label, amount: c.amount.toFixed(2) }));
+
+  return {
+    id: ++billHistoryId,
+    dateStr, timeStr,
+    shopName: shopName || 'Bill',
+    rows: rowData,
+    extraCharges,
+    mrpTotal: mrpTotal.toFixed(2),
+    svcTotal: svcTotal.toFixed(2),
+    grandTotal
+  };
+}
+
+function renderBillPreview(entry){
+  const rowsHtml = entry.rows.map(r =>
+    `<tr><td>${escapeHtml(r.label)}</td><td>${r.qty}</td><td>₹${r.mrp}</td><td>₹${r.svc}</td><td>₹${r.total}</td></tr>`
+  ).join('');
+  const extraRowsHtml = entry.extraCharges.map(c =>
+    `<tr><td>${escapeHtml(c.label)}</td><td>-</td><td>-</td><td>-</td><td>₹${c.amount}</td></tr>`
+  ).join('');
+
+  document.getElementById('bpShopName').textContent = entry.shopName;
+  document.getElementById('bpMeta').textContent = `Date: ${entry.dateStr}   Time: ${entry.timeStr}`;
+  document.getElementById('bpBody').innerHTML = rowsHtml + extraRowsHtml;
+  document.getElementById('bpMrpTotal').textContent = '₹' + entry.mrpTotal;
+  document.getElementById('bpSvcTotal').textContent = '₹' + entry.svcTotal;
+  document.getElementById('bpGrandTotal').textContent = '₹' + entry.grandTotal;
+
+  document.getElementById('billPreviewOverlay').classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+function printBill(){
+  const entry = buildCurrentBillSnapshot();
+  if(!entry){
+    alert('Bill me koi item nahi hai. Pehle product select karo.');
+    return;
+  }
+  billHistory.unshift(entry);
+  renderBillPreview(entry);
+}
+
+function closeBillPreview(){
+  document.getElementById('billPreviewOverlay').classList.remove('active');
+}
+
+// ---------- Bill History ----------
+function openBillHistory(){
+  renderBillHistoryList();
+  document.getElementById('billHistoryOverlay').classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+function closeBillHistory(){
+  document.getElementById('billHistoryOverlay').classList.remove('active');
+}
+
+function renderBillHistoryList(){
+  const list = document.getElementById('billHistoryList');
+  if(billHistory.length === 0){
+    list.innerHTML = '<div class="bh-empty">Abhi tak koi bill save nahi hua. "Print Bill" dabate hi bill yahan save ho jaayega.</div>';
+    return;
+  }
+  list.innerHTML = billHistory.map(entry => `
+    <div class="bh-entry">
+      <div class="bh-entry-top">
+        <div class="bh-entry-meta">${entry.dateStr} &nbsp;${entry.timeStr}<br>${entry.rows.length} item(s)</div>
+        <div class="bh-entry-total">₹${entry.grandTotal}</div>
+      </div>
+      <div class="bh-entry-actions">
+        <button class="secondary" onclick="viewHistoryEntry(${entry.id})">👁 View</button>
+        <button class="secondary" onclick="deleteHistoryEntry(${entry.id})">🗑 Delete</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function viewHistoryEntry(id){
+  const entry = billHistory.find(e => e.id === id);
+  if(!entry) return;
+  closeBillHistory();
+  renderBillPreview(entry);
+}
+
+function deleteHistoryEntry(id){
+  if(!confirm('Ye saved bill delete kar dein?')) return;
+  billHistory = billHistory.filter(e => e.id !== id);
+  renderBillHistoryList();
+}
+
+// ---------- Cloud Sync (multi-device) ----------
+// ---------- Cloud Sync (multi-device, auto) ----------
+// The Sync URL is remembered on this device (localStorage) so auto-sync keeps
+// working after a reload. Every admin change (products, categories, sizes,
+// charges, password) auto-uploads a snapshot; every device also auto-checks
+// the cloud for newer data on load and every 20 seconds.
+let lastSyncedAt = 0;
+let autoUploadTimer = null;
+
+function getSyncUrl(){
+  return document.getElementById('syncUrlInput').value.trim();
+}
+
+function saveSyncUrl(){
+  const url = getSyncUrl();
+  if(url) localStorage.setItem('billingToolSyncUrl', url);
+  else localStorage.removeItem('billingToolSyncUrl');
+}
+
+function loadSavedSyncUrl(){
+  const saved = localStorage.getItem('billingToolSyncUrl');
+  if(saved) document.getElementById('syncUrlInput').value = saved;
+}
+
+// Called after any admin-side change. Waits a moment (in case more edits are
+// coming) then silently pushes the latest data to the cloud.
+function scheduleAutoUpload(){
+  const url = getSyncUrl();
+  if(!url) return;
+  clearTimeout(autoUploadTimer);
+  autoUploadTimer = setTimeout(() => { uploadToCloud(true); }, 1200);
+}
+
+async function uploadToCloud(silent){
+  const url = getSyncUrl();
+  const msg = document.getElementById('syncMsg');
+  if(!url){
+    if(!silent){
+      msg.style.color = 'var(--danger)';
+      msg.textContent = 'Pehle Sync URL paste karo.';
+    }
+    return;
+  }
+  const now = Date.now();
+  const snapshot = { masterData, categoryList, sizeList, chargeSettings, passwordHash: currentPasswordHash, updatedAt: now };
+  if(!silent){
+    msg.style.color = 'var(--muted)';
+    msg.textContent = 'Upload ho raha hai...';
+  }
+  try{
+    await fetch(url, { method: 'POST', body: JSON.stringify(snapshot) });
+    lastSyncedAt = now;
+    msg.style.color = 'var(--ok)';
+    msg.textContent = silent
+      ? `✅ Auto-sync ho gaya (${masterData.length} products).`
+      : `✅ Upload ho gaya (${masterData.length} products). Baaki devices khud-ba-khud sync ho jayenge.`;
+  } catch(err){
+    if(!silent){
+      msg.style.color = 'var(--danger)';
+      msg.textContent = '❌ Upload fail ho gaya. URL check karo aur internet on hai ya nahi.';
+    }
+  }
+}
+
+// silent=true is used for auto-load/polling — no error popups, no disrupting
+// the admin form if the user is mid-typing in it.
+async function downloadFromCloud(silent){
+  const url = getSyncUrl();
+  const msg = document.getElementById('syncMsg');
+  if(!url){
+    if(!silent){
+      msg.style.color = 'var(--danger)';
+      msg.textContent = 'Pehle Sync URL paste karo.';
+    }
+    return;
+  }
+  if(silent){
+    const activeInAdminForm = document.activeElement && document.activeElement.closest('.admin-form, .lock-screen, .change-pass-box');
+    if(activeInAdminForm) return; // don't yank the form out from under active typing
+  }
+  if(!silent){
+    msg.style.color = 'var(--muted)';
+    msg.textContent = 'Download ho raha hai...';
+  }
+  try{
+    const res = await fetch(url);
+    const data = await res.json();
+    if(!data || !data.masterData){
+      if(!silent){
+        msg.style.color = 'var(--danger)';
+        msg.textContent = 'Cloud par abhi tak koi data upload nahi hua hai.';
+      }
+      return;
+    }
+    if(silent && data.updatedAt && data.updatedAt <= lastSyncedAt) return; // already up to date
+
+    masterData = data.masterData || [];
+    categoryList = data.categoryList || categoryList;
+    sizeList = data.sizeList || sizeList;
+    chargeSettings = Object.assign(chargeSettings, data.chargeSettings || {});
+    if(data.passwordHash) currentPasswordHash = data.passwordHash;
+    masterId = masterData.reduce((max, m) => Math.max(max, m.id), 0);
+    lastSyncedAt = data.updatedAt || Date.now();
+
+    renderCategoryOptions();
+    renderSizeOptions();
+    renderMaster();
+    refreshAllDropdowns();
+    document.getElementById('setCaseCharge').value = chargeSettings.caseCharge;
+
+    msg.style.color = 'var(--ok)';
+    msg.textContent = silent
+      ? `✅ Naya data doosre device se sync hua (${masterData.length} products).`
+      : `✅ Download ho gaya (${masterData.length} products load hue).`;
+  } catch(err){
+    if(!silent){
+      msg.style.color = 'var(--danger)';
+      msg.textContent = '❌ Download fail ho gaya. URL check karo aur internet on hai ya nahi.';
+    }
+  }
+}
+
+function copyAppsScriptCode(btn){
+  const code = document.getElementById('appsScriptCode').textContent;
+  navigator.clipboard.writeText(code).then(() => {
+    const original = btn.textContent;
+    btn.textContent = '✅ Copied!';
+    setTimeout(() => { btn.textContent = original; }, 1500);
+  }).catch(() => {
+    alert('Copy nahi ho paya, code ko manually select karke copy kar lo.');
+  });
+}
+
+function initAutoSync(){
+  loadSavedSyncUrl();
+  document.getElementById('syncUrlInput').addEventListener('change', saveSyncUrl);
+  document.getElementById('syncUrlInput').addEventListener('blur', saveSyncUrl);
+  if(getSyncUrl()){
+    downloadFromCloud(true); // pull latest as soon as the app opens
+  }
+  setInterval(() => {
+    if(getSyncUrl()) downloadFromCloud(true);
+  }, 20000); // check for updates from other devices every 20s
+}
+
+// ---------- Sync URL via QR (no typing needed on other devices) ----------
+function showSyncQr(){
+  const url = getSyncUrl();
+  if(!url){
+    alert('Pehle is device par Sync URL paste karo (ek baar), phir "Show QR" se doosre devices me bhejo.');
+    return;
+  }
+  const box = document.getElementById('qrCodeBox');
+  box.innerHTML = '';
+  if(typeof QRCode === 'undefined'){
+    box.innerHTML = '<p style="color:red;">QR library load nahi ho payi — internet check karo.</p>';
+  } else {
+    new QRCode(box, { text: url, width: 220, height: 220 });
+  }
+  document.getElementById('qrDisplayOverlay').style.display = 'block';
+}
+
+function closeSyncQr(){
+  document.getElementById('qrDisplayOverlay').style.display = 'none';
+}
+
+let qrScanStream = null;
+let qrScanRAF = null;
+
+async function openQrScanner(){
+  const overlay = document.getElementById('qrScannerOverlay');
+  const video = document.getElementById('qrVideo');
+  const msg = document.getElementById('qrScanMsg');
+  msg.textContent = 'QR ko camera ke saamne le jao...';
+  overlay.style.display = 'block';
+
+  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+    msg.textContent = '❌ Ye browser/connection camera access support nahi karta (HTTPS zaroori hai).';
+    return;
+  }
+  try{
+    qrScanStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+    video.srcObject = qrScanStream;
+    await video.play();
+    qrScanRAF = requestAnimationFrame(scanQrLoop);
+  } catch(err){
+    msg.textContent = '❌ Camera access nahi mila. Permission allow karke dubara try karo.';
+  }
+}
+
+function scanQrLoop(){
+  const video = document.getElementById('qrVideo');
+  const canvas = document.getElementById('qrCanvas');
+  const msg = document.getElementById('qrScanMsg');
+
+  if(video.readyState === video.HAVE_ENOUGH_DATA){
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const code = jsQR(imageData.data, imageData.width, imageData.height);
+    if(code && code.data){
+      const scannedUrl = code.data.trim();
+      document.getElementById('syncUrlInput').value = scannedUrl;
+      saveSyncUrl();
+      msg.textContent = '✅ URL mil gaya! Sync ho raha hai...';
+      closeQrScanner();
+      downloadFromCloud(false);
+      return;
+    }
+  }
+  qrScanRAF = requestAnimationFrame(scanQrLoop);
+}
+
+function closeQrScanner(){
+  document.getElementById('qrScannerOverlay').style.display = 'none';
+  if(qrScanRAF){ cancelAnimationFrame(qrScanRAF); qrScanRAF = null; }
+  if(qrScanStream){
+    qrScanStream.getTracks().forEach(t => t.stop());
+    qrScanStream = null;
+  }
+}
+
+
+// ---------- Tabs ----------
+function switchTab(tab){
+  document.getElementById('billView').classList.toggle('active', tab==='bill');
+  document.getElementById('adminView').classList.toggle('active', tab==='admin');
+  document.getElementById('tabBillBtn').classList.toggle('active', tab==='bill');
+  document.getElementById('tabAdminBtn').classList.toggle('active', tab==='admin');
+
+  if(tab === 'admin'){
+    document.getElementById('lockPassInput').value = '';
+    document.getElementById('lockError').textContent = '';
+    if(adminUnlocked){
+      document.getElementById('adminLock').style.display = 'none';
+      document.getElementById('adminContent').style.display = 'block';
+    } else {
+      document.getElementById('adminLock').style.display = 'block';
+      document.getElementById('adminContent').style.display = 'none';
+    }
+  }
+}
+
+// ---------- Password Auth ----------
+// Password is never stored in plain text — only its SHA-256 hash is kept,
+// and entered passwords are hashed before comparing.
+async function sha256Hex(text){
+  const data = new TextEncoder().encode(text);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+let currentPasswordHash = '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9';
+let adminUnlocked = false;
+
+async function checkPassword(){
+  const entered = document.getElementById('lockPassInput').value;
+  const enteredHash = await sha256Hex(entered);
+  if(enteredHash === currentPasswordHash){
+    adminUnlocked = true;
+    document.getElementById('adminLock').style.display = 'none';
+    document.getElementById('adminContent').style.display = 'block';
+  } else {
+    document.getElementById('lockError').textContent = 'Wrong password, try again';
+  }
+}
+
+function lockAdmin(){
+  adminUnlocked = false;
+  switchTab('bill');
+}
+
+async function changePassword(){
+  const oldP = document.getElementById('oldPass').value;
+  const p1 = document.getElementById('newPass1').value;
+  const p2 = document.getElementById('newPass2').value;
+  const msg = document.getElementById('passMsg');
+
+  const oldHash = await sha256Hex(oldP);
+  if(oldHash !== currentPasswordHash){
+    msg.style.color = 'var(--danger)';
+    msg.textContent = 'Current password is incorrect';
+    return;
+  }
+  if(!p1 || p1.length < 4){
+    msg.style.color = 'var(--danger)';
+    msg.textContent = 'New password must be at least 4 characters';
+    return;
+  }
+  if(p1 !== p2){
+    msg.style.color = 'var(--danger)';
+    msg.textContent = 'The two new passwords do not match';
+    return;
+  }
+  currentPasswordHash = await sha256Hex(p1);
+  msg.style.color = 'var(--ok)';
+  msg.textContent = '✅ Password updated successfully — sab devices par sync ho jayega.';
+  document.getElementById('oldPass').value = '';
+  document.getElementById('newPass1').value = '';
+  document.getElementById('newPass2').value = '';
+  scheduleAutoUpload();
+}
+
+// init
+// ---------- Settings: Shop Name feature toggle ----------
+let shopNameFeatureEnabled = false;
+
+function toggleShopNameFeature(){
+  shopNameFeatureEnabled = !shopNameFeatureEnabled;
+  updateShopNameFieldState();
+}
+
+function updateShopNameFieldState(){
+  const el = document.getElementById('shopName');
+  const btn = document.getElementById('shopNameToggleBtn');
+  el.disabled = !shopNameFeatureEnabled;
+  el.placeholder = shopNameFeatureEnabled ? 'Shop Name (bill ke liye)' : 'Coming Soon';
+  if(!shopNameFeatureEnabled) el.value = '';
+  btn.textContent = shopNameFeatureEnabled ? '✅ Enabled — Click to Disable' : '🔒 Disabled — Click to Enable';
+}
+
+// ---------- Settings: Service Charge rates ----------
+function updateChargeSettings(){
+  chargeSettings.caseCharge = parseFloat(document.getElementById('setCaseCharge').value) || 0;
+  recalcAllRows();
+  scheduleAutoUpload();
+}
+
+function recalcAllRows(){
+  document.querySelectorAll('#tbody tr').forEach(tr=>{
+    const sel = tr.querySelector('.product');
+    if(sel.value) calcRow(sel);
+  });
+}
+
+// ---------- Password show/hide ----------
+function togglePasswordVisibility(inputId, btn){
+  const el = document.getElementById(inputId);
+  if(el.type === 'password'){
+    el.type = 'text';
+    btn.textContent = '🙈';
+  } else {
+    el.type = 'password';
+    btn.textContent = '👁️';
+  }
+}
+
+renderCategoryOptions();
+renderSizeOptions();
+renderMaster();
+addRow(); addRow(); addRow();
+updateShopNameFieldState();
+initAutoSync();
+
+// ---------- PWA: Service Worker registration ----------
+if('serviceWorker' in navigator){
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(()=>{});
+  });
+}
+</script>
+
+</body>
+</html>
